@@ -1,9 +1,8 @@
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QMenu, QMenuBar, QAction, QVBoxLayout, QWidget, QStackedWidget, QLineEdit, QPushButton, QListWidget
-)
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QMenuBar, QAction, QVBoxLayout, QWidget, QStackedWidget, QLineEdit, QPushButton
 from PyQt5.QtCore import QUrl
-
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from history import HistoryWindow  # Импортируем окно История
+from bookmarks import BookmarksWindow  # Импортируем окно Закладки
 
 class Browser(QMainWindow):
     def __init__(self):
@@ -18,11 +17,10 @@ class Browser(QMainWindow):
         # История и закладки
         self.history = []
         self.bookmarks = []
+        self.previous_url = None  # Для отслеживания предыдущего URL
 
         # Создаём страницы
         self.create_browser_page()
-        self.create_history_page()
-        self.create_bookmarks_page()
 
         # Добавляем меню
         self.create_menu()
@@ -47,44 +45,27 @@ class Browser(QMainWindow):
 
         layout.addWidget(self.browser)
 
+        # Кнопка "На главную"
+        self.home_button = QPushButton("На главную")
+        self.home_button.clicked.connect(self.go_to_home)
+        layout.addWidget(self.home_button)
+
         self.browser_page.setLayout(layout)
         self.stacked_widget.addWidget(self.browser_page)
-
-    def create_history_page(self):
-        """Страница истории посещений."""
-        self.history_page = QWidget()
-        layout = QVBoxLayout()
-
-        self.history_list = QListWidget()
-        layout.addWidget(self.history_list)
-
-        self.history_page.setLayout(layout)
-        self.stacked_widget.addWidget(self.history_page)
-
-    def create_bookmarks_page(self):
-        """Страница закладок."""
-        self.bookmarks_page = QWidget()
-        layout = QVBoxLayout()
-
-        self.bookmarks_list = QListWidget()
-        layout.addWidget(self.bookmarks_list)
-
-        self.bookmarks_page.setLayout(layout)
-        self.stacked_widget.addWidget(self.bookmarks_page)
 
     def create_menu(self):
         """Создаёт главное меню."""
         menu_bar = self.menuBar()
 
-        # Меню "Файл"
-        file_menu = menu_bar.addMenu("Файл")
+        # Меню "Настройки"
+        settings_menu = menu_bar.addMenu("Настройки")
         refresh_action = QAction("Обновить", self)
         refresh_action.triggered.connect(self.refresh_page)
-        file_menu.addAction(refresh_action)
+        settings_menu.addAction(refresh_action)
 
         close_action = QAction("Закрыть", self)
         close_action.triggered.connect(self.close)
-        file_menu.addAction(close_action)
+        settings_menu.addAction(close_action)
 
         # Меню "Переход"
         navigate_menu = menu_bar.addMenu("Переход")
@@ -121,22 +102,17 @@ class Browser(QMainWindow):
         """Добавляет посещённую страницу в историю."""
         if url.toString() not in self.history:
             self.history.append(url.toString())
-            self.history_list.addItem(url.toString())
 
     def show_history(self):
-        """Показывает страницу с историей."""
-        self.stacked_widget.setCurrentWidget(self.history_page)
+        """Показывает окно истории в новом окне."""
+        self.history_window = HistoryWindow(self.history)
+        self.history_window.show()
 
     def show_bookmarks(self):
-        """Показывает страницу с закладками."""
-        self.stacked_widget.setCurrentWidget(self.bookmarks_page)
+        """Показывает окно закладок в новом окне."""
+        self.bookmarks_window = BookmarksWindow(self.bookmarks)
+        self.bookmarks_window.show()
 
-    def add_to_bookmarks(self):
-        """Добавляет текущую страницу в закладки."""
-        url = self.browser.url().toString()
-        if url not in self.bookmarks:
-            self.bookmarks.append(url)
-            self.bookmarks_list.addItem(url)
 
 if __name__ == "__main__":
     app = QApplication([])
